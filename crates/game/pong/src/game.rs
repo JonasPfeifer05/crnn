@@ -14,7 +14,6 @@ pub struct PongGame {
 }
 
 pub struct PongGameState {
-    pub player_pos: (f32, f32),
     pub score: (usize, usize),
     pub ball_pos: Vec2,
     pub ball_dir: Vec2,
@@ -27,7 +26,6 @@ impl PongGame {
         PongGame {
             player: (player_one, player_two),
             state: PongGameState {
-                player_pos: (0.0, 0.0),
                 score: (0, 0),
                 ball_pos: vec2(0.5, 0.5),
                 ball_dir: Vec2::from_angle(start_direction),
@@ -45,26 +43,13 @@ impl PongGame {
 
 impl Game for PongGame {
     fn tick(&mut self, delta_time: Duration) {
-        self.state.player_pos.0 += self
-            .player
-            .0
-            .move_panel(&self.state, self.state.player_pos.0)
-            .max(-1.0)
-            .min(1.0)
-            * delta_time.as_secs_f32();
-        self.state.player_pos.1 += self
-            .player
-            .1
-            .move_panel(&self.state, self.state.player_pos.1)
-            .max(-1.0)
-            .min(1.0)
-            * delta_time.as_secs_f32();
-
-        self.state.player_pos.0 = self.state.player_pos.0.max(0.0).min(1.0 - PLAYER_HEIGHT);
-        self.state.player_pos.1 = self.state.player_pos.1.max(0.0).min(1.0 - PLAYER_HEIGHT);
+        // update positions
+        self.player.0.update_pos(&self.state, &delta_time);
+        self.player.1.update_pos(&self.state, &delta_time);
 
         self.state.ball_pos += self.state.ball_dir * delta_time.as_secs_f32();
 
+        // bounce ball on ceiling / floor
         if self.state.ball_pos.y > 1. {
             self.state.ball_dir.y = -self.state.ball_dir.y.abs();
         }
@@ -73,38 +58,26 @@ impl Game for PongGame {
             self.state.ball_dir.y = self.state.ball_dir.y.abs();
         }
 
-        if self.state.ball_pos.x > 1. - PLAYER_WIDTH {
-            if self.state.ball_pos.y > self.state.player_pos.1
-                && self.state.ball_pos.y < self.state.player_pos.1 + PLAYER_HEIGHT
-            {
-                let relative_intersect = (self.state.ball_pos.y
-                    - (self.state.player_pos.1 + PLAYER_HEIGHT / 2.))
-                    / (PLAYER_HEIGHT / 2.);
-                let bounce_angle = (relative_intersect) * MAX_BOUNCE_ANGLE;
+        // bounce ball on panels
+        if self.state.ball_pos.x > 1. - PLAYER_WIDTH
+            && self.player.1.does_intersect_ball(&self.state.ball_pos)
+        {
+            let bounce_angle = self.player.1.get_bounce_angle(self.state.ball_pos.y);
 
-                let speed = self.state.ball_dir.length(); // Maintain ball speed
-                self.state.ball_dir.x = -self.state.ball_dir.x.abs() * bounce_angle.cos();
-                self.state.ball_dir.y = bounce_angle.sin();
-                self.state.ball_dir = self.state.ball_dir.normalize() * speed;
-            }
+            self.state.ball_dir.x = -self.state.ball_dir.x.abs() * bounce_angle.cos();
+            self.state.ball_dir.y = bounce_angle.sin();
         }
 
-        if self.state.ball_pos.x < PLAYER_WIDTH {
-            if self.state.ball_pos.y > self.state.player_pos.0
-                && self.state.ball_pos.y < self.state.player_pos.0 + PLAYER_HEIGHT
-            {
-                let relative_intersect = (self.state.ball_pos.y
-                    - (self.state.player_pos.0 + PLAYER_HEIGHT / 2.))
-                    / (PLAYER_HEIGHT / 2.);
-                let bounce_angle = (relative_intersect) * MAX_BOUNCE_ANGLE;
+        if self.state.ball_pos.x < PLAYER_WIDTH
+            && self.player.0.does_intersect_ball(&self.state.ball_pos)
+        {
+            let bounce_angle = self.player.0.get_bounce_angle(self.state.ball_pos.y);
 
-                let speed = self.state.ball_dir.length(); // Maintain ball speed
-                self.state.ball_dir.x = self.state.ball_dir.x.abs() * bounce_angle.cos();
-                self.state.ball_dir.y = bounce_angle.sin();
-                self.state.ball_dir = self.state.ball_dir.normalize() * speed;
-            }
+            self.state.ball_dir.x = self.state.ball_dir.x.abs() * bounce_angle.cos();
+            self.state.ball_dir.y = bounce_angle.sin();
         }
 
+        // handle player loose
         if self.state.ball_pos.x > 1. {
             self.state.score.0 += 1;
             self.reset_ball()
@@ -117,7 +90,52 @@ impl Game for PongGame {
     }
 }
 
-pub enum PongPlayer {
+pub struct PongPlayer {
+    input: PongPlayerInput,
+    pos: f32,
+}
+
+impl PongPlayer {
+    pub fn keyboard() -> PongPlayer {
+        PongPlayer {
+            input: PongPlayerInput::Keyboard {
+                down_pressed: false,
+                up_pressed: false,
+            },
+            pos: 0.5,
+        }
+    }
+
+    pub fn sync() -> PongPlayer {
+        PongPlayer {
+            input: PongPlayerInput::Sync,
+            pos: 0.5,
+        }
+    }
+
+    pub fn update_pos(&mut self, state: &PongGameState, delta_time: &Duration) {
+        self.pos += self.input.normalized_tick(state, self.pos) * delta_time.as_secs_f32();
+        self.pos = self.pos.max(0.0).min(1.0 - PLAYER_HEIGHT);
+    }
+
+    pub fn does_intersect_ball(&self, ball_pos: &Vec2) -> bool {
+        ball_pos.y > self.pos && ball_pos.y < self.pos + PLAYER_HEIGHT
+    }
+
+    pub fn get_bounce_angle(&self, ball_y: f32) -> f32 {
+        let relative_intersect = (ball_y - (self.pos + PLAYER_HEIGHT / 2.)) / (PLAYER_HEIGHT / 2.);
+        (relative_intersect) * MAX_BOUNCE_ANGLE
+    }
+
+    pub fn input_mut(&mut self) -> &mut PongPlayerInput {
+        &mut self.input
+    }
+    pub fn pos(&self) -> f32 {
+        self.pos
+    }
+}
+
+pub enum PongPlayerInput {
     Keyboard {
         up_pressed: bool,
         down_pressed: bool,
@@ -126,32 +144,23 @@ pub enum PongPlayer {
     Model,
 }
 
-impl PongPlayer {
-    pub fn keyboard() -> PongPlayer {
-        PongPlayer::Keyboard {
-            down_pressed: false,
-            up_pressed: false,
-        }
+impl PongPlayerInput {
+    pub fn normalized_tick(&self, state: &PongGameState, player_pos: f32) -> f32 {
+        self.tick(state, player_pos).max(-1.0).min(1.0)
     }
 
-    pub fn move_panel(&self, state: &PongGameState, player_pos: f32) -> f32 {
+    fn tick(&self, state: &PongGameState, player_pos: f32) -> f32 {
         match self {
-            PongPlayer::Keyboard {
-                up_pressed: key_up_pressed,
-                down_pressed: key_down_pressed,
-            } => {
-                if key_up_pressed == key_down_pressed {
-                    return 0.0;
-                };
-
-                if *key_up_pressed {
-                    -1.0
-                } else {
-                    1.0
-                }
-            }
-            PongPlayer::Sync => (state.ball_pos.y - (player_pos + PLAYER_HEIGHT / 2.0)) * 5.,
-            PongPlayer::Model => 0.0,
+            PongPlayerInput::Keyboard {
+                up_pressed,
+                down_pressed,
+            } => match (*up_pressed, *down_pressed) {
+                (true, false) => -1.0,
+                (false, true) => 1.0,
+                _ => 0.0,
+            },
+            PongPlayerInput::Sync => (state.ball_pos.y - (player_pos + PLAYER_HEIGHT / 2.0)) * 5.,
+            PongPlayerInput::Model => 0.0,
         }
     }
 }
