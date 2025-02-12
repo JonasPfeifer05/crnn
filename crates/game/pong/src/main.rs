@@ -11,7 +11,7 @@ use ggez::{
 };
 
 const PLAYER_HEIGHT: f32 = 0.2;
-const PLAYER_WIDTH: f32 = 0.05;
+const PLAYER_WIDTH: f32 = 0.02;
 
 mod game;
 struct Pong {
@@ -57,6 +57,23 @@ impl event::EventHandler<GameError> for Pong {
                     PLAYER_HEIGHT,
                 ))
                 .color(Color::WHITE),
+        );
+
+        let mb = &mut graphics::MeshBuilder::new();
+
+        mb.circle(
+            graphics::DrawMode::fill(),
+            Vec2::new(0.0, 0.0),
+            0.01,
+            0.001,
+            Color::RED,
+        )?;
+
+        let mesh = graphics::Mesh::from_data(ctx, mb.build());
+
+        canvas.draw(
+            &mesh,
+            graphics::DrawParam::new().dest(self.game.state.ball_pos),
         );
 
         let score = self.game.state.score;
@@ -135,9 +152,9 @@ impl event::EventHandler<GameError> for Pong {
 fn main() -> GameResult {
     let (ctx, events_loop) = ggez::ContextBuilder::new("pong", "")
         .window_setup(ggez::conf::WindowSetup::default().title("Pong!"))
-        .window_mode(ggez::conf::WindowMode::default().dimensions(720.0, 480.0))
+        .window_mode(ggez::conf::WindowMode::default().dimensions(720.0, 720.0))
         .build()?;
 
-    let state = Pong::new(PongPlayer::keyboard(), PongPlayer::keyboard());
+    let state = Pong::new(PongPlayer::keyboard(), PongPlayer::Sync);
     event::run(ctx, events_loop, state)
 }
