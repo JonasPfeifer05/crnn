@@ -1,4 +1,4 @@
-use crate::game::{PongGame, PongPlayer};
+use crate::game::{PongGame, PongPlayer, PLAYER_HEIGHT, PLAYER_WIDTH};
 use game_lib::Game;
 use ggez::glam::{vec2, Vec2};
 use ggez::graphics::{Color, Rect, Text, TextAlign, TextLayout};
@@ -9,9 +9,6 @@ use ggez::{
     input::keyboard::{KeyCode, KeyInput},
     Context, GameError, GameResult,
 };
-
-const PLAYER_HEIGHT: f32 = 0.2;
-const PLAYER_WIDTH: f32 = 0.02;
 
 mod game;
 struct Pong {

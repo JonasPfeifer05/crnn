@@ -1,9 +1,12 @@
-use crate::{PLAYER_HEIGHT, PLAYER_WIDTH};
 use game_lib::Game;
 use ggez::glam::{vec2, Vec2};
 use rand::random_range;
-use std::f32::consts::PI;
+use std::f32::consts::{FRAC_PI_4, PI};
 use std::time::Duration;
+
+pub const MAX_BOUNCE_ANGLE: f32 = FRAC_PI_4;
+pub const PLAYER_HEIGHT: f32 = 0.2;
+pub const PLAYER_WIDTH: f32 = 0.02;
 
 pub struct PongGame {
     pub player: (PongPlayer, PongPlayer),
@@ -71,18 +74,34 @@ impl Game for PongGame {
         }
 
         if self.state.ball_pos.x > 1. - PLAYER_WIDTH {
-            if (self.state.ball_pos.y > self.state.player_pos.1
-                && self.state.ball_pos.y < self.state.player_pos.1 + PLAYER_HEIGHT)
+            if self.state.ball_pos.y > self.state.player_pos.1
+                && self.state.ball_pos.y < self.state.player_pos.1 + PLAYER_HEIGHT
             {
-                self.state.ball_dir.x = -self.state.ball_dir.x.abs();
+                let relative_intersect = (self.state.ball_pos.y
+                    - (self.state.player_pos.1 + PLAYER_HEIGHT / 2.))
+                    / (PLAYER_HEIGHT / 2.);
+                let bounce_angle = (relative_intersect) * MAX_BOUNCE_ANGLE;
+
+                let speed = self.state.ball_dir.length(); // Maintain ball speed
+                self.state.ball_dir.x = -self.state.ball_dir.x.abs() * bounce_angle.cos();
+                self.state.ball_dir.y = bounce_angle.sin();
+                self.state.ball_dir = self.state.ball_dir.normalize() * speed;
             }
         }
 
-        if self.state.ball_pos.x < 0. + PLAYER_WIDTH {
-            if (self.state.ball_pos.y > self.state.player_pos.0
-                && self.state.ball_pos.y < self.state.player_pos.0 + PLAYER_HEIGHT)
+        if self.state.ball_pos.x < PLAYER_WIDTH {
+            if self.state.ball_pos.y > self.state.player_pos.0
+                && self.state.ball_pos.y < self.state.player_pos.0 + PLAYER_HEIGHT
             {
-                self.state.ball_dir.x = self.state.ball_dir.x.abs();
+                let relative_intersect = (self.state.ball_pos.y
+                    - (self.state.player_pos.0 + PLAYER_HEIGHT / 2.))
+                    / (PLAYER_HEIGHT / 2.);
+                let bounce_angle = (relative_intersect) * MAX_BOUNCE_ANGLE;
+
+                let speed = self.state.ball_dir.length(); // Maintain ball speed
+                self.state.ball_dir.x = self.state.ball_dir.x.abs() * bounce_angle.cos();
+                self.state.ball_dir.y = bounce_angle.sin();
+                self.state.ball_dir = self.state.ball_dir.normalize() * speed;
             }
         }
 
