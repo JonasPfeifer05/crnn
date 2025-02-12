@@ -9,6 +9,9 @@ use game_lib::Game;
 use ggez::graphics::Rect;
 use ggez::winit::event::VirtualKeyCode;
 
+const PLAYER_HEIGHT: f32 = 0.2;
+const PLAYER_WIDTH: f32 = 0.05;
+
 mod game;
 struct Pong {
     game: PongGame,
@@ -40,14 +43,19 @@ impl event::EventHandler<GameError> for Pong {
         canvas.draw(
             &graphics::Quad,
             graphics::DrawParam::new()
-                .dest_rect(Rect::new(0., pos_0, 0.05, 0.2))
+                .dest_rect(Rect::new(0., pos_0, PLAYER_WIDTH, PLAYER_HEIGHT))
                 .color([1.0, 1.0, 1.0, 1.0]),
         );
 
         canvas.draw(
             &graphics::Quad,
             graphics::DrawParam::new()
-                .dest_rect(Rect::new(0.95, pos_1, 0.05, 0.2))
+                .dest_rect(Rect::new(
+                    1. - PLAYER_WIDTH,
+                    pos_1,
+                    PLAYER_WIDTH,
+                    PLAYER_HEIGHT,
+                ))
                 .color([1.0, 1.0, 1.0, 1.0]),
         );
 
@@ -63,26 +71,18 @@ impl event::EventHandler<GameError> for Pong {
 
         if let Some(key) = input.keycode {
             match (key, player_one, player_two) {
-                (VirtualKeyCode::Up, PongPlayer::Keyboard { key_up_pressed, .. }, _) => {
-                    *key_up_pressed = true
+                (VirtualKeyCode::Up, PongPlayer::Keyboard { up_pressed, .. }, _) => {
+                    *up_pressed = true
                 }
-                (
-                    VirtualKeyCode::Down,
-                    PongPlayer::Keyboard {
-                        key_down_pressed, ..
-                    },
-                    _,
-                ) => *key_down_pressed = true,
-                (VirtualKeyCode::W, _, PongPlayer::Keyboard { key_up_pressed, .. }) => {
-                    *key_up_pressed = true
+                (VirtualKeyCode::Down, PongPlayer::Keyboard { down_pressed, .. }, _) => {
+                    *down_pressed = true
                 }
-                (
-                    VirtualKeyCode::S,
-                    _,
-                    PongPlayer::Keyboard {
-                        key_down_pressed, ..
-                    },
-                ) => *key_down_pressed = true,
+                (VirtualKeyCode::W, _, PongPlayer::Keyboard { up_pressed, .. }) => {
+                    *up_pressed = true
+                }
+                (VirtualKeyCode::S, _, PongPlayer::Keyboard { down_pressed, .. }) => {
+                    *down_pressed = true
+                }
                 _ => {}
             }
         }
@@ -96,26 +96,18 @@ impl event::EventHandler<GameError> for Pong {
 
         if let Some(key) = input.keycode {
             match (key, player_one, player_two) {
-                (VirtualKeyCode::Up, PongPlayer::Keyboard { key_up_pressed, .. }, _) => {
-                    *key_up_pressed = false
+                (VirtualKeyCode::Up, PongPlayer::Keyboard { up_pressed, .. }, _) => {
+                    *up_pressed = false
                 }
-                (
-                    VirtualKeyCode::Down,
-                    PongPlayer::Keyboard {
-                        key_down_pressed, ..
-                    },
-                    _,
-                ) => *key_down_pressed = false,
-                (VirtualKeyCode::W, _, PongPlayer::Keyboard { key_up_pressed, .. }) => {
-                    *key_up_pressed = false
+                (VirtualKeyCode::Down, PongPlayer::Keyboard { down_pressed, .. }, _) => {
+                    *down_pressed = false
                 }
-                (
-                    VirtualKeyCode::S,
-                    _,
-                    PongPlayer::Keyboard {
-                        key_down_pressed, ..
-                    },
-                ) => *key_down_pressed = false,
+                (VirtualKeyCode::W, _, PongPlayer::Keyboard { up_pressed, .. }) => {
+                    *up_pressed = false
+                }
+                (VirtualKeyCode::S, _, PongPlayer::Keyboard { down_pressed, .. }) => {
+                    *down_pressed = false
+                }
                 _ => {}
             }
         }
