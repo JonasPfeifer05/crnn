@@ -30,7 +30,7 @@ impl ThinkingLayer {
                 .map(|_| {
                     Neuron::new(
                         rng().random::<f32>() - 0.5,
-                        (rng().random::<f32>() * 1.0).round() as usize + 1,
+                        rng().random::<f32>().round() as usize + 1,
                         0.0,
                     )
                 })
