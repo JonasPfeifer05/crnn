@@ -1,13 +1,14 @@
+use crate::game::{PongGame, PongPlayer};
+use game_lib::Game;
+use ggez::glam::{vec2, Vec2};
+use ggez::graphics::{Color, Rect, Text, TextAlign, TextLayout};
+use ggez::mint::Vector2;
+use ggez::winit::event::VirtualKeyCode;
 use ggez::{
     event, graphics,
     input::keyboard::{KeyCode, KeyInput},
     Context, GameError, GameResult,
 };
-
-use crate::game::{PongGame, PongPlayer};
-use game_lib::Game;
-use ggez::graphics::Rect;
-use ggez::winit::event::VirtualKeyCode;
 
 const PLAYER_HEIGHT: f32 = 0.2;
 const PLAYER_WIDTH: f32 = 0.05;
@@ -32,8 +33,7 @@ impl event::EventHandler<GameError> for Pong {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        let mut canvas =
-            graphics::Canvas::from_frame(ctx, graphics::Color::from([0.0, 0.0, 0.0, 1.0]));
+        let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from(Color::BLACK));
 
         canvas.set_screen_coordinates(Rect::new(0., 0., 1., 1.));
 
@@ -44,7 +44,7 @@ impl event::EventHandler<GameError> for Pong {
             &graphics::Quad,
             graphics::DrawParam::new()
                 .dest_rect(Rect::new(0., pos_0, PLAYER_WIDTH, PLAYER_HEIGHT))
-                .color([1.0, 1.0, 1.0, 1.0]),
+                .color(Color::WHITE),
         );
 
         canvas.draw(
@@ -56,7 +56,23 @@ impl event::EventHandler<GameError> for Pong {
                     PLAYER_WIDTH,
                     PLAYER_HEIGHT,
                 ))
-                .color([1.0, 1.0, 1.0, 1.0]),
+                .color(Color::WHITE),
+        );
+
+        let score = self.game.state.score;
+        let mut score_display = Text::new(format!("{} / {}", score.0, score.1));
+        score_display
+            .set_bounds(Vec2::new(f32::INFINITY, f32::INFINITY))
+            .set_layout(TextLayout {
+                h_align: TextAlign::Middle,
+                v_align: TextAlign::Begin,
+            });
+
+        canvas.draw(
+            &score_display,
+            graphics::DrawParam::from([0.5, 0.0])
+                .color(Color::WHITE)
+                .scale(vec2(0.002, 0.002)),
         );
 
         canvas.finish(ctx)?;

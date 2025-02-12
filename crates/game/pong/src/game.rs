@@ -9,7 +9,7 @@ pub struct PongGame {
 
 pub struct PongGameState {
     pub player_pos: (f32, f32),
-    score: (usize, usize),
+    pub score: (usize, usize),
 }
 
 impl PongGame {
