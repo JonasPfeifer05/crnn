@@ -1,10 +1,10 @@
 pub trait ActivationFunction {
-    fn call(value: f64) -> f64;
+    fn apply(value: f64) -> f64;
 }
 
 pub struct Tanh;
 impl ActivationFunction for Tanh {
-    fn call(value: f64) -> f64 {
+    fn apply(value: f64) -> f64 {
         value.tanh()
     }
 }
@@ -16,14 +16,14 @@ impl Sigmoid {
     }
 }
 impl ActivationFunction for Sigmoid {
-    fn call(value: f64) -> f64 {
+    fn apply(value: f64) -> f64 {
         Self::sigmoid(value)
     }
 }
 
 pub struct Relu;
 impl ActivationFunction for Relu {
-    fn call(value: f64) -> f64 {
+    fn apply(value: f64) -> f64 {
         if value > 0.0 {
             value
         } else {

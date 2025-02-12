@@ -4,15 +4,15 @@ use anyhow::bail;
 use rand::{rng, Rng};
 
 pub struct ThinkingLayer<Activation: ActivationFunction> {
-    pub input_count: usize,
-    pub internal_count: usize,
-    pub output_count: usize,
+    input_count: usize,
+    internal_count: usize,
+    output_count: usize,
 
-    pub neurons: Vec<Neuron<Activation>>,
-    pub neuron_states: Vec<f64>,
-    pub weights: Vec<f64>,
+    neurons: Vec<Neuron<Activation>>,
+    neuron_states: Vec<f64>,
+    weights: Vec<f64>,
 
-    pub internal_tick: usize,
+    internal_tick: usize,
 }
 
 impl<Activation: ActivationFunction> ThinkingLayer<Activation> {
@@ -43,11 +43,11 @@ impl<Activation: ActivationFunction> ThinkingLayer<Activation> {
         if self.internal_tick == 0 {
             self.internal_tick = 1;
         }
-        
+
         if let Some(input) = input {
             self.neuron_states.splice(0..self.input_count, input);
         }
-        
+
         let exclude_input_range = self.input_count..self.internal_count;
 
         let new_states = self.neurons[exclude_input_range.clone()]
@@ -63,14 +63,35 @@ impl<Activation: ActivationFunction> ThinkingLayer<Activation> {
             })
             .collect::<Vec<_>>();
 
-        self.neuron_states.splice(
-            exclude_input_range,
-            new_states
-        );
-        
+        self.neuron_states.splice(exclude_input_range, new_states);
+
         self.internal_tick = self.internal_tick.overflowing_add(self.internal_count).0;
-        
+
         let output_range = self.internal_count - self.output_count..self.internal_count;
         self.neuron_states[output_range].to_vec()
+    }
+
+    pub fn input_count(&self) -> usize {
+        self.input_count
+    }
+
+    pub fn internal_count(&self) -> usize {
+        self.internal_count
+    }
+
+    pub fn output_count(&self) -> usize {
+        self.output_count
+    }
+
+    pub fn neurons(&self) -> &[Neuron<Activation>] {
+        &self.neurons
+    }
+
+    pub fn neuron_states(&self) -> &[f64] {
+        &self.neuron_states
+    }
+
+    pub fn weights(&self) -> &[f64] {
+        &self.weights
     }
 }
