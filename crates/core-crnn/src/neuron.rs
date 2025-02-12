@@ -18,10 +18,10 @@ impl<Activation: ActivationFunction> Neuron<Activation> {
         }
     }
 
-    pub fn random<R: Rng>(&self, rng: &mut R) -> Self {
+    pub fn random<R: Rng>(rng: &mut R) -> Self {
         Self {
             bias: rng.random::<f64>() * 2.0 - 1.0,
-            delay: rng.random_range(1..=5),
+            delay: rng.random_range(1..=2),
             phantom: PhantomData,
         }
     }
@@ -37,7 +37,7 @@ impl<Activation: ActivationFunction> Neuron<Activation> {
                 let neuron_value = thinking_layer.neuron_states[neuron_index];
 
                 let mut weight_index =
-                    neuron_index * thinking_layer.internal_count + activate_index;
+                    neuron_index * (thinking_layer.internal_count-1) + activate_index;
                 if activate_index >= neuron_index {
                     weight_index -= 1;
                 }
