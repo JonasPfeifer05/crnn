@@ -50,8 +50,9 @@ impl<Activation: ActivationFunction> ThinkingLayer<Activation> {
                 .iter()
                 .enumerate()
                 .map(|(index, neuron)| {
+                    let index = index + self.input_count;
                     if neuron.delay() % self.internal_tick == 0 {
-                        neuron.activate(&self)
+                        neuron.activate(index, &self)
                     } else {
                         self.neuron_states[index]
                     }
