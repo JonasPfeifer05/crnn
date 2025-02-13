@@ -40,7 +40,7 @@ impl ThinkingLayer {
         })
     }
 
-    pub fn tick(&mut self, input: Option<Vec<f64>>) -> Vec<f64> {
+    pub fn tick(&mut self, input: Option<Vec<f64>>) {
         if self.internal_tick == 0 {
             self.internal_tick = 1;
         }
@@ -67,7 +67,9 @@ impl ThinkingLayer {
         self.neuron_states.splice(exclude_input_range, new_states);
 
         self.internal_tick = self.internal_tick.overflowing_add(1).0;
+    }
 
+    pub fn output(&self) -> Vec<f64> {
         let output_range = self.internal_count - self.output_count..self.internal_count;
         self.neuron_states[output_range].to_vec()
     }

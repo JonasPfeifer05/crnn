@@ -1,4 +1,6 @@
 use crate::game::{PongGame, PongPlayer, PongPlayerInput, PLAYER_HEIGHT, PLAYER_WIDTH};
+use core_crnn::activation_function::ActivationFunction;
+use core_crnn::thinking_layer::ThinkingLayer;
 use game_lib::Game;
 use ggez::glam::{vec2, Vec2};
 use ggez::graphics::{Canvas, Color, Rect, Text, TextAlign, TextLayout};
@@ -85,6 +87,7 @@ impl Pong {
 
 impl event::EventHandler<GameError> for Pong {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
+        self.game.tick_model();
         self.game.tick(ctx.time.delta());
         Ok(())
     }
@@ -159,6 +162,14 @@ fn main() -> GameResult {
         .window_mode(ggez::conf::WindowMode::default().dimensions(720.0, 720.0))
         .build()?;
 
-    let state = Pong::new(PongPlayer::keyboard(), PongPlayer::sync());
+    let model = ThinkingLayer::new(
+        PongGame::input_nodes(),
+        100,
+        PongGame::output_nodes(),
+        ActivationFunction::Tanh,
+    )
+    .unwrap();
+
+    let state = Pong::new(PongPlayer::model(model), PongPlayer::sync());
     event::run(ctx, events_loop, state)
 }

@@ -764,6 +764,9 @@ checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 [[package]]
 name = "game-lib"
 version = "0.1.0"
+dependencies = [
+ "core-crnn",
+]
 
 [[package]]
 name = "getrandom"
@@ -1831,6 +1834,7 @@ checksum = "22686f4785f02a4fcc856d3b3bb19bf6c8160d103f7a99cc258bddd0251dc7f2"
 name = "pong"
 version = "0.1.0"
 dependencies = [
+ "core-crnn",
  "game-lib",
  "ggez",
  "rand 0.9.0",
