@@ -1,2 +1,2 @@
 [workspace]
-members = ["crates/experimental", "crates/game/game-lib", "crates/game/pong"]
+members = ["crates/core-crnn", "crates/game/game-lib", "crates/game/pong"]
