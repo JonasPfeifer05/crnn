@@ -164,7 +164,7 @@ impl PongPlayer {
 
     pub fn update_pos(&mut self, state: &PongGameState, delta_time: &Duration) {
         self.pos += self.input.normalized_tick(state, self.pos) * delta_time.as_secs_f32();
-        self.pos = self.pos.max(0.0).min(1.0 - PLAYER_HEIGHT);
+        self.pos = self.pos.clamp(0.0, 1.0 - PLAYER_HEIGHT);
     }
 
     pub fn does_intersect_ball(&self, ball_pos: &Vec2) -> bool {
@@ -195,7 +195,7 @@ pub enum PongPlayerInput {
 
 impl PongPlayerInput {
     pub fn normalized_tick(&self, state: &PongGameState, player_pos: f32) -> f32 {
-        self.tick(state, player_pos).max(-1.0).min(1.0)
+        self.tick(state, player_pos).clamp(-1.0, 1.0)
     }
 
     fn tick(&self, state: &PongGameState, player_pos: f32) -> f32 {
@@ -209,7 +209,7 @@ impl PongPlayerInput {
                 _ => 0.0,
             },
             PongPlayerInput::Sync => (state.ball_pos.y - (player_pos + PLAYER_HEIGHT / 2.0)) * 5.,
-            PongPlayerInput::Model(model) => *model.output().get(0).unwrap() as f32,
+            PongPlayerInput::Model(model) => *model.output().first().unwrap() as f32,
         }
     }
 }

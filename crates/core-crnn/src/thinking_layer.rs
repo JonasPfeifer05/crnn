@@ -57,7 +57,7 @@ impl ThinkingLayer {
             .map(|(index, neuron)| {
                 let index = index + self.input_count;
                 if self.internal_tick % neuron.delay() == 0 {
-                    neuron.activate(index, &self)
+                    neuron.activate(index, self)
                 } else {
                     self.neuron_states[index]
                 }

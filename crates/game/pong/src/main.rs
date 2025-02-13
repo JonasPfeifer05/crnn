@@ -92,7 +92,7 @@ impl event::EventHandler<GameError> for Pong {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        let mut canvas = Canvas::from_frame(ctx, graphics::Color::from(Color::BLACK));
+        let mut canvas = Canvas::from_frame(ctx, Color::BLACK);
         canvas.set_screen_coordinates(Rect::new(0., 0., 1., 1.));
 
         self.draw_players(&mut canvas);
