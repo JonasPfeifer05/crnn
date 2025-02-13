@@ -1,4 +1,3 @@
-use crate::game::{PongGame, PongPlayer, PongPlayerInput, PLAYER_HEIGHT, PLAYER_WIDTH};
 use core_crnn::activation_function::ActivationFunction;
 use core_crnn::thinking_layer::ThinkingLayer;
 use game_lib::Game;
@@ -6,8 +5,8 @@ use ggez::glam::{vec2, Vec2};
 use ggez::graphics::{Canvas, Color, Rect, Text, TextAlign, TextLayout};
 use ggez::winit::event::VirtualKeyCode;
 use ggez::{event, graphics, input::keyboard::KeyInput, Context, GameError, GameResult};
+use pong::game::{PongGame, PongPlayer, PongPlayerInput, PLAYER_HEIGHT, PLAYER_WIDTH};
 
-mod game;
 struct Pong {
     game: PongGame,
 }

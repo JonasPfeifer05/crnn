@@ -2,7 +2,7 @@ use core_crnn::thinking_layer::ThinkingLayer;
 use std::time::Duration;
 
 pub trait Game {
-    fn new(model: ThinkingLayer) -> Self;
+    fn from_model(model: ThinkingLayer) -> Self;
 
     fn input_nodes() -> usize;
     fn output_nodes() -> usize;

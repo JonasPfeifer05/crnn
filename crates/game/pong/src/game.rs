@@ -42,7 +42,7 @@ impl PongGame {
 }
 
 impl Game for PongGame {
-    fn new(model: core_crnn::thinking_layer::ThinkingLayer) -> Self {
+    fn from_model(model: core_crnn::thinking_layer::ThinkingLayer) -> Self {
         PongGame::new(PongPlayer::model(model), PongPlayer::sync())
     }
 
@@ -128,7 +128,7 @@ impl Game for PongGame {
     }
 
     fn score(&self) -> f32 {
-        (self.state.score.0 - self.state.score.1) as f32
+        self.state.score.0 as f32 - self.state.score.1 as f32
     }
 }
 
