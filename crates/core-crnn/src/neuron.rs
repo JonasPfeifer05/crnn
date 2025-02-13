@@ -1,39 +1,34 @@
 use crate::activation_function::ActivationFunction;
 use crate::thinking_layer::ThinkingLayer;
 use rand::Rng;
-use std::marker::PhantomData;
 
-pub struct Neuron<Activation: ActivationFunction> {
+pub struct Neuron {
     bias: f64,
     delay: usize,
-    phantom: PhantomData<Activation>,
+    activation_function: ActivationFunction,
 }
 
-impl<Activation: ActivationFunction> Neuron<Activation> {
-    pub fn new(bias: f64, delay: usize) -> Self {
+impl Neuron {
+    pub fn new(bias: f64, delay: usize, activation_function: ActivationFunction) -> Self {
         Self {
             bias,
             delay,
-            phantom: PhantomData,
+            activation_function,
         }
     }
 
-    pub fn random<R: Rng>(rng: &mut R) -> Self {
+    pub fn random<R: Rng>(rng: &mut R, activation_function: ActivationFunction) -> Self {
         Self {
             // TODO remove magic numbers
             bias: rng.random::<f64>() * 2.0 - 1.0,
             delay: rng.random_range(1..=2),
-            phantom: PhantomData,
+            activation_function,
         }
     }
 
-    pub fn activate(
-        &self,
-        activate_index: usize,
-        thinking_layer: &ThinkingLayer<Activation>,
-    ) -> f64 {
-        let value: f64 = (0..thinking_layer.internal_count() - 1)
-            .map(|i| if i >= activate_index { i + 1 } else { i })
+    pub fn activate(&self, activate_index: usize, thinking_layer: &ThinkingLayer) -> f64 {
+        let value: f64 = (0..thinking_layer.internal_count())
+            .filter(|i| i != &activate_index)
             .map(|neuron_index| {
                 let neuron_value = thinking_layer.neuron_states()[neuron_index];
 
@@ -48,7 +43,7 @@ impl<Activation: ActivationFunction> Neuron<Activation> {
             })
             .sum();
 
-        Activation::apply(value + self.bias)
+        self.activation_function.apply(value + self.bias)
     }
 
     pub fn bias(&self) -> f64 {

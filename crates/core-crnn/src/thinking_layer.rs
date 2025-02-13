@@ -3,23 +3,24 @@ use crate::neuron::Neuron;
 use anyhow::bail;
 use rand::{rng, Rng};
 
-pub struct ThinkingLayer<Activation: ActivationFunction> {
+pub struct ThinkingLayer {
     input_count: usize,
     internal_count: usize,
     output_count: usize,
 
-    neurons: Vec<Neuron<Activation>>,
+    neurons: Vec<Neuron>,
     neuron_states: Vec<f64>,
     weights: Vec<f64>,
 
     internal_tick: usize,
 }
 
-impl<Activation: ActivationFunction> ThinkingLayer<Activation> {
+impl ThinkingLayer {
     pub fn new(
         input_count: usize,
         internal_count: usize,
         output_count: usize,
+        activation_function: ActivationFunction,
     ) -> anyhow::Result<Self> {
         if input_count + output_count > internal_count {
             bail!("Cannot create thinking layer with fewer neurons than input and output values")
@@ -29,7 +30,7 @@ impl<Activation: ActivationFunction> ThinkingLayer<Activation> {
             internal_count,
             output_count,
             neurons: (0..internal_count)
-                .map(|_| Neuron::random(&mut rng()))
+                .map(|_| Neuron::random(&mut rng(), activation_function.clone()))
                 .collect(),
             neuron_states: vec![0.0; internal_count],
             weights: (0..internal_count * (internal_count - 1))
@@ -65,7 +66,7 @@ impl<Activation: ActivationFunction> ThinkingLayer<Activation> {
 
         self.neuron_states.splice(exclude_input_range, new_states);
 
-        self.internal_tick = self.internal_tick.overflowing_add(self.internal_count).0;
+        self.internal_tick = self.internal_tick.overflowing_add(1).0;
 
         let output_range = self.internal_count - self.output_count..self.internal_count;
         self.neuron_states[output_range].to_vec()
@@ -83,7 +84,7 @@ impl<Activation: ActivationFunction> ThinkingLayer<Activation> {
         self.output_count
     }
 
-    pub fn neurons(&self) -> &[Neuron<Activation>] {
+    pub fn neurons(&self) -> &[Neuron] {
         &self.neurons
     }
 

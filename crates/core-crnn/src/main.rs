@@ -1,4 +1,4 @@
-use core_crnn::activation_function::Sigmoid;
+use core_crnn::activation_function::ActivationFunction;
 use core_crnn::thinking_layer::ThinkingLayer;
 use rand::{rng, Rng};
 use std::time::Instant;
@@ -8,7 +8,8 @@ fn main() -> anyhow::Result<()> {
     let internal = 1024;
     let output = 1;
 
-    let mut thinking_layer = ThinkingLayer::<Sigmoid>::new(input, internal, output)?;
+    let mut thinking_layer =
+        ThinkingLayer::new(input, internal, output, ActivationFunction::Sigmoid)?;
 
     loop {
         let start = Instant::now();
