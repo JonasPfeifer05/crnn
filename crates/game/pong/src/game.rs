@@ -42,6 +42,18 @@ impl PongGame {
 }
 
 impl Game for PongGame {
+    fn from_model(model: core_crnn::thinking_layer::ThinkingLayer) -> Self {
+        PongGame::new(PongPlayer::model(model), PongPlayer::sync())
+    }
+
+    fn input_nodes() -> usize {
+        5
+    }
+
+    fn output_nodes() -> usize {
+        1
+    }
+
     fn tick(&mut self, delta_time: Duration) {
         // update positions
         self.player.0.update_pos(&self.state, &delta_time);
@@ -88,6 +100,36 @@ impl Game for PongGame {
             self.reset_ball()
         }
     }
+
+    fn tick_model(&mut self) {
+        if let PongPlayerInput::Model(model) = &mut self.player.0.input {
+            let input = vec![
+                self.player.0.pos as f64,
+                self.state.ball_pos.x as f64,
+                self.state.ball_pos.y as f64,
+                self.state.ball_dir.x as f64,
+                self.state.ball_dir.y as f64,
+            ];
+
+            model.tick(Some(input));
+        }
+
+        if let PongPlayerInput::Model(model) = &mut self.player.1.input {
+            let input = vec![
+                self.player.1.pos as f64,
+                self.state.ball_pos.x as f64,
+                self.state.ball_pos.y as f64,
+                self.state.ball_dir.x as f64,
+                self.state.ball_dir.y as f64,
+            ];
+
+            model.tick(Some(input));
+        }
+    }
+
+    fn score(&self) -> f32 {
+        self.state.score.0 as f32 - self.state.score.1 as f32
+    }
 }
 
 pub struct PongPlayer {
@@ -113,9 +155,16 @@ impl PongPlayer {
         }
     }
 
+    pub fn model(model: core_crnn::thinking_layer::ThinkingLayer) -> PongPlayer {
+        PongPlayer {
+            input: PongPlayerInput::Model(model),
+            pos: 0.5,
+        }
+    }
+
     pub fn update_pos(&mut self, state: &PongGameState, delta_time: &Duration) {
         self.pos += self.input.normalized_tick(state, self.pos) * delta_time.as_secs_f32();
-        self.pos = self.pos.max(0.0).min(1.0 - PLAYER_HEIGHT);
+        self.pos = self.pos.clamp(0.0, 1.0 - PLAYER_HEIGHT);
     }
 
     pub fn does_intersect_ball(&self, ball_pos: &Vec2) -> bool {
@@ -141,12 +190,12 @@ pub enum PongPlayerInput {
         down_pressed: bool,
     },
     Sync,
-    Model,
+    Model(core_crnn::thinking_layer::ThinkingLayer),
 }
 
 impl PongPlayerInput {
     pub fn normalized_tick(&self, state: &PongGameState, player_pos: f32) -> f32 {
-        self.tick(state, player_pos).max(-1.0).min(1.0)
+        self.tick(state, player_pos).clamp(-1.0, 1.0)
     }
 
     fn tick(&self, state: &PongGameState, player_pos: f32) -> f32 {
@@ -160,7 +209,7 @@ impl PongPlayerInput {
                 _ => 0.0,
             },
             PongPlayerInput::Sync => (state.ball_pos.y - (player_pos + PLAYER_HEIGHT / 2.0)) * 5.,
-            PongPlayerInput::Model => 0.0,
+            PongPlayerInput::Model(model) => *model.output().first().unwrap() as f32,
         }
     }
 }

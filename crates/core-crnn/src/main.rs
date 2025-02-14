@@ -14,7 +14,8 @@ fn main() -> anyhow::Result<()> {
     loop {
         let start = Instant::now();
         let input: Vec<f64> = rng().random_iter().take(input).collect();
-        let output = thinking_layer.tick(Some(input.clone()));
+        thinking_layer.tick(Some(input.clone()));
+        let output = thinking_layer.output();
 
         println!("{:.4?} -> {:.4?} ({:?})", input, output, start.elapsed());
     }
