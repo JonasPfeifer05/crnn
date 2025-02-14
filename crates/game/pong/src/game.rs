@@ -1,12 +1,26 @@
 use game_lib::Game;
 use ggez::glam::{vec2, Vec2};
 use rand::random_range;
-use std::f32::consts::{FRAC_PI_4, PI};
+use std::f32::consts::FRAC_PI_4;
 use std::time::Duration;
 
 pub const MAX_BOUNCE_ANGLE: f32 = FRAC_PI_4;
 pub const PLAYER_HEIGHT: f32 = 0.2;
 pub const PLAYER_WIDTH: f32 = 0.02;
+
+pub enum Direction {
+    Left,
+    Right,
+}
+
+impl Direction {
+    pub fn orient_vec2(&self, vec: &mut Vec2) {
+        match self {
+            Direction::Left => vec.x = -vec.x.abs(),
+            Direction::Right => vec.x = vec.x.abs(),
+        }
+    }
+}
 
 pub struct PongGame {
     pub player: (PongPlayer, PongPlayer),
@@ -19,25 +33,30 @@ pub struct PongGameState {
     pub ball_dir: Vec2,
 }
 
+pub fn random_ball_direction() -> f32 {
+    random_range(-FRAC_PI_4..FRAC_PI_4)
+}
+
 impl PongGame {
     pub fn new(player_one: PongPlayer, player_two: PongPlayer) -> Self {
-        let start_direction = random_range(0.0..(PI * 2.));
+        let mut ball_dir = Vec2::from_angle(random_ball_direction());
+        ball_dir.x *= -1.0;
 
         PongGame {
             player: (player_one, player_two),
             state: PongGameState {
                 score: (0, 0),
                 ball_pos: vec2(0.5, 0.5),
-                ball_dir: Vec2::from_angle(start_direction),
+                ball_dir,
             },
         }
     }
 
-    fn reset_ball(&mut self) {
-        let start_direction = random_range(0.0..(PI * 2.));
-
+    fn reset_ball(&mut self, direction: Direction) {
         self.state.ball_pos = vec2(0.5, 0.5);
-        self.state.ball_dir = Vec2::from_angle(start_direction);
+
+        self.state.ball_dir = Vec2::from_angle(random_ball_direction());
+        direction.orient_vec2(&mut self.state.ball_dir);
     }
 }
 
@@ -76,8 +95,8 @@ impl Game for PongGame {
         {
             let bounce_angle = self.player.1.get_bounce_angle(self.state.ball_pos.y);
 
-            self.state.ball_dir.x = -self.state.ball_dir.x.abs() * bounce_angle.cos();
-            self.state.ball_dir.y = bounce_angle.sin();
+            self.state.ball_dir = Vec2::from_angle(bounce_angle);
+            self.state.ball_dir.y *= -1.;
         }
 
         if self.state.ball_pos.x < PLAYER_WIDTH
@@ -85,19 +104,18 @@ impl Game for PongGame {
         {
             let bounce_angle = self.player.0.get_bounce_angle(self.state.ball_pos.y);
 
-            self.state.ball_dir.x = self.state.ball_dir.x.abs() * bounce_angle.cos();
-            self.state.ball_dir.y = bounce_angle.sin();
+            self.state.ball_dir = Vec2::from_angle(bounce_angle);
         }
 
         // handle player loose
         if self.state.ball_pos.x > 1. {
             self.state.score.0 += 1;
-            self.reset_ball()
+            self.reset_ball(Direction::Left);
         }
 
         if self.state.ball_pos.x < 0. {
             self.state.score.1 += 1;
-            self.reset_ball()
+            self.reset_ball(Direction::Right)
         }
     }
 
