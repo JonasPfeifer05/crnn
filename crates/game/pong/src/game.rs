@@ -8,6 +8,20 @@ pub const MAX_BOUNCE_ANGLE: f32 = FRAC_PI_4;
 pub const PLAYER_HEIGHT: f32 = 0.2;
 pub const PLAYER_WIDTH: f32 = 0.02;
 
+pub enum Direction {
+    Left,
+    Right,
+}
+
+impl Direction {
+    pub fn orient_vec2(&self, vec: &mut Vec2) {
+        match self {
+            Direction::Left => vec.x = -vec.x.abs(),
+            Direction::Right => vec.x = vec.x.abs(),
+        }
+    }
+}
+
 pub struct PongGame {
     pub player: (PongPlayer, PongPlayer),
     pub state: PongGameState,
@@ -38,12 +52,11 @@ impl PongGame {
         }
     }
 
-    fn reset_ball(&mut self, direction_mul: i32) {
-        let start_direction = random_ball_direction();
-
+    fn reset_ball(&mut self, direction: Direction) {
         self.state.ball_pos = vec2(0.5, 0.5);
-        self.state.ball_dir = Vec2::from_angle(start_direction);
-        self.state.ball_dir.x *= direction_mul as f32;
+
+        self.state.ball_dir = Vec2::from_angle(random_ball_direction());
+        direction.orient_vec2(&mut self.state.ball_dir);
     }
 }
 
@@ -97,12 +110,12 @@ impl Game for PongGame {
         // handle player loose
         if self.state.ball_pos.x > 1. {
             self.state.score.0 += 1;
-            self.reset_ball(-1)
+            self.reset_ball(Direction::Left);
         }
 
         if self.state.ball_pos.x < 0. {
             self.state.score.1 += 1;
-            self.reset_ball(1)
+            self.reset_ball(Direction::Right)
         }
     }
 
