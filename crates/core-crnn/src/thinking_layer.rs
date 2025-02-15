@@ -141,4 +141,20 @@ impl ThinkingLayer {
 
         self.activation_function.apply(sum + bias)
     }
+
+    pub fn genome(&self) -> &[f64] {
+        &self.genome
+    }
+
+    pub fn genome_mut(&mut self) -> &mut [f64] {
+        &mut self.genome
+    }
+
+    pub fn set_genome(&mut self, genome: Vec<f64>) {
+        self.genome = genome;
+    }
+
+    pub fn activation_function(&self) -> &ActivationFunction {
+        &self.activation_function
+    }
 }

@@ -1,4 +1,3 @@
 pub mod activation_function;
-pub mod neuron;
-pub mod thinking_layer;
 pub mod genome;
+pub mod thinking_layer;
