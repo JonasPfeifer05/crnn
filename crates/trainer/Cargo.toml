@@ -4,4 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-core-crnn={path = "../core-crnn"}
+pong = { path = "../game/pong" }
+game-lib = { path = "../game/game-lib" }
+core-crnn = { path = "../core-crnn" }
