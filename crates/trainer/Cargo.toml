@@ -7,3 +7,7 @@ edition = "2021"
 pong = { path = "../game/pong" }
 game-lib = { path = "../game/game-lib" }
 core-crnn = { path = "../core-crnn" }
+rand = "0.9.0"
+rand_distr = "0.5.0"
+ggez = "0.9.3"
+rayon = "1.10.0"
