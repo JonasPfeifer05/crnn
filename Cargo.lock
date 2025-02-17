@@ -521,7 +521,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "criterion",
+ "itertools 0.14.0",
  "rand 0.9.0",
+ "rand_distr",
 ]
 
 [[package]]
@@ -1271,6 +1273,15 @@ name = "itertools"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
 dependencies = [
  "either",
 ]
@@ -2148,6 +2159,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rand_distr"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ddc3b5afe4c995c44540865b8ca5c52e6a59fa362da96c5d30886930ddc8da1c"
+dependencies = [
+ "num-traits",
+ "rand 0.9.0",
+]
+
+[[package]]
 name = "range-alloc"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2686,7 +2707,11 @@ version = "0.1.0"
 dependencies = [
  "core-crnn",
  "game-lib",
+ "ggez",
  "pong",
+ "rand 0.9.0",
+ "rand_distr",
+ "rayon",
 ]
 
 [[package]]
