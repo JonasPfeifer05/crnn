@@ -35,7 +35,7 @@ impl ThinkingLayer {
                 .flat_map(|_| {
                     let mut data = vec![
                         rng.random::<f64>() / 10.0 - 0.05, // Random bias from -0.1 to 0.1 (1xf64)
-                        1.0 + rng.random::<f64>() * 2.0, // Random delay from 1 to 3. (1xf64)
+                        1.0 + rng.random::<f64>() * 2.0,   // Random delay from 1 to 3. (1xf64)
                     ];
                     data.extend(
                         // Random weights in from -0.1 to 0.1 (n-1xf64)
@@ -130,15 +130,18 @@ impl ThinkingLayer {
     }
 
     fn activate_neuron(&self, neuron_index: usize) -> f64 {
-        let weights = self.input_weights(neuron_index);
-        let mut inputs = self.neuron_states().to_vec();
-        inputs.remove(neuron_index);
+        let mut weights = self.input_weights(neuron_index).iter();
+        let states = self.neuron_states();
 
-        let sum: f64 = weights
-            .into_iter()
-            .zip(inputs)
-            .map(|(weight, value)| weight * value)
-            .sum();
+        let mut sum = 0.0;
+
+        for state in &states[..neuron_index] {
+            sum += weights.next().unwrap() * state;
+        }
+
+        for state in &states[(neuron_index + 1)..] {
+            sum += weights.next().unwrap() * state;
+        }
 
         let bias = *self.bias()[neuron_index];
 
