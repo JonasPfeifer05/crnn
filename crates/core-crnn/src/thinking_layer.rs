@@ -1,6 +1,6 @@
 use crate::activation_function::ActivationFunction;
 use anyhow::bail;
-use rand::{random_iter, rng, Rng};
+use rand::{random_iter, random_range};
 
 #[derive(Debug, Clone)]
 pub struct ThinkingLayer {
@@ -26,17 +26,14 @@ impl ThinkingLayer {
         if input_count + output_count > internal_count {
             bail!("Cannot create thinking layer with fewer neurons than input and output values")
         }
-        let mut rng = rng();
+
         Ok(Self {
             input_size: input_count,
             internal_size: internal_count,
             output_size: output_count,
             genome: (0..internal_count)
                 .flat_map(|_| {
-                    let mut data = vec![
-                        rng.random::<f64>() / 10.0 - 0.05, // Random bias from -0.1 to 0.1 (1xf64)
-                        1.0 + rng.random::<f64>() * 2.0,   // Random delay from 1 to 3. (1xf64)
-                    ];
+                    let mut data = vec![random_range(-0.1..0.1), random_range(1.0..3.0)];
                     data.extend(
                         // Random weights in from -0.1 to 0.1 (n-1xf64)
                         random_iter::<f64>()
