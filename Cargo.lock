@@ -185,6 +185,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "bench"
+version = "0.1.0"
+dependencies = [
+ "core-crnn",
+]
+
+[[package]]
 name = "bindgen"
 version = "0.70.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

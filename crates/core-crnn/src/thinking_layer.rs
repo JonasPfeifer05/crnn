@@ -1,6 +1,6 @@
 use crate::activation_function::ActivationFunction;
 use anyhow::bail;
-use rand::{random_iter, rng, Rng};
+use rand::{random_iter, random_range};
 
 #[derive(Debug, Clone)]
 pub struct ThinkingLayer {
@@ -26,17 +26,14 @@ impl ThinkingLayer {
         if input_count + output_count > internal_count {
             bail!("Cannot create thinking layer with fewer neurons than input and output values")
         }
-        let mut rng = rng();
+
         Ok(Self {
             input_size: input_count,
             internal_size: internal_count,
             output_size: output_count,
             genome: (0..internal_count)
                 .flat_map(|_| {
-                    let mut data = vec![
-                        rng.random::<f64>() / 10.0 - 0.05, // Random bias from -0.1 to 0.1 (1xf64)
-                        1.0 + rng.random::<f64>() * 2.0, // Random delay from 1 to 3. (1xf64)
-                    ];
+                    let mut data = vec![random_range(-0.1..0.1), random_range(1.0..3.0)];
                     data.extend(
                         // Random weights in from -0.1 to 0.1 (n-1xf64)
                         random_iter::<f64>()
@@ -103,12 +100,8 @@ impl ThinkingLayer {
         &self.neuron_states
     }
 
-    pub fn bias(&self) -> Vec<&f64> {
-        self.genome
-            .iter()
-            .skip(0) // Bias is the first element
-            .step_by(self.neuron_data_length())
-            .collect()
+    pub fn bias(&self, index: usize) -> f64 {
+        self.genome[index * self.neuron_data_length()] // Bias is the first element
     }
 
     pub fn delays(&self) -> Vec<&f64> {
@@ -130,17 +123,20 @@ impl ThinkingLayer {
     }
 
     fn activate_neuron(&self, neuron_index: usize) -> f64 {
-        let weights = self.input_weights(neuron_index);
-        let mut inputs = self.neuron_states().to_vec();
-        inputs.remove(neuron_index);
+        let mut weights = self.input_weights(neuron_index).iter();
+        let states = self.neuron_states();
 
-        let sum: f64 = weights
-            .into_iter()
-            .zip(inputs)
-            .map(|(weight, value)| weight * value)
-            .sum();
+        let mut sum = 0.0;
 
-        let bias = *self.bias()[neuron_index];
+        for state in &states[..neuron_index] {
+            sum += weights.next().unwrap() * state;
+        }
+
+        for state in &states[(neuron_index + 1)..] {
+            sum += weights.next().unwrap() * state;
+        }
+
+        let bias = self.bias(neuron_index);
 
         self.activation_function.apply(sum + bias)
     }
