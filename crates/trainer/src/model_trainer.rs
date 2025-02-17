@@ -3,7 +3,7 @@ use core_crnn::thinking_layer::ThinkingLayer;
 use game_lib::{Game, GameMetaData, GameSettings};
 use rand::distr::weighted::WeightedIndex;
 use rand::distr::Distribution;
-use rand::{rng};
+use rand::rng;
 use rayon::iter::ParallelIterator;
 use rayon::iter::{IntoParallelIterator, ParallelDrainRange};
 use std::time::Duration;
