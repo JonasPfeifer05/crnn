@@ -42,7 +42,7 @@ fn main() {
         trainer.train_next_gen::<PongGame>();
         let all_time_best = trainer.overall_best().as_ref().unwrap().score;
 
-        if last_saved.is_none() || (last_saved.is_some() && last_saved.unwrap() < all_time_best) {
+        if last_saved.is_none() || last_saved.unwrap() < all_time_best {
             let best_genome = trainer
                 .overall_best()
                 .as_ref()
