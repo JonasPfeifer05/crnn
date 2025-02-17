@@ -12,12 +12,6 @@ use std::fs;
 use trainer::persisted_genome::PersistedGenome;
 
 fn main() {
-    // 1. Train 100 players
-    // 2. Select top 2
-    // 3. Make 98 children
-    // 4. Mutate children
-    // 5. Repeat
-
     let mut last_saved = None;
     let mut model = ThinkingLayer::new(
         PongGame::input_nodes(),
@@ -47,31 +41,24 @@ fn main() {
     for generation_index in 0..100 {
         trainer.train_next_gen::<PongGame>();
         let all_time_best = trainer.overall_best().as_ref().unwrap().score;
-        let genome = trainer.overall_best().as_ref().unwrap().model.genome();
 
-        match &last_saved {
-            None => {
-                println!("Saving new best model...");
-                last_saved = Some(all_time_best);
-                let json = serde_json::to_string(&PersistedGenome {
-                    score: all_time_best,
-                    genome: genome.to_vec(),
-                })
-                .unwrap();
-                fs::write("model.json", json).unwrap();
-            }
-            Some(last_value) => {
-                if *last_value < all_time_best {
-                    println!("Saving new best model...");
-                    last_saved = Some(all_time_best);
-                    let json = serde_json::to_string(&PersistedGenome {
-                        score: all_time_best,
-                        genome: genome.to_vec(),
-                    })
-                    .unwrap();
-                    fs::write("model.json", json).unwrap();
-                }
-            }
+        if last_saved.is_none() || (last_saved.is_some() && last_saved.unwrap() < all_time_best) {
+            let best_genome = trainer
+                .overall_best()
+                .as_ref()
+                .unwrap()
+                .model
+                .genome()
+                .to_vec();
+
+            println!("Saving new best model...");
+            last_saved = Some(all_time_best);
+            let json = serde_json::to_string(&PersistedGenome {
+                score: all_time_best,
+                genome: best_genome,
+            })
+            .unwrap();
+            fs::write("model.json", json).unwrap();
         }
 
         println!(
