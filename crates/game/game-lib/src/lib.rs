@@ -1,12 +1,15 @@
 use core_crnn::thinking_layer::ThinkingLayer;
 use std::time::Duration;
 
-pub trait Game {
+pub trait GameMetaData{
     fn from_model(model: ThinkingLayer) -> Self;
-
     fn input_nodes() -> usize;
     fn output_nodes() -> usize;
+}
 
+pub trait Game {
+    fn extract_model(self) -> Option<ThinkingLayer>;
+    
     fn run(&mut self, game_settings: GameSettings) -> f32 {
         let tick_count =
             game_settings.duration.as_millis() / game_settings.tick_duration.as_millis();

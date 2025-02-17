@@ -1,4 +1,4 @@
-use game_lib::Game;
+use game_lib::{Game, GameMetaData};
 use ggez::glam::{vec2, Vec2};
 use rand::random_range;
 use std::f32::consts::{FRAC_PI_4, PI};
@@ -11,6 +11,7 @@ pub const PLAYER_WIDTH: f32 = 0.02;
 pub struct PongGame {
     pub player: (PongPlayer, PongPlayer),
     pub state: PongGameState,
+    score: f32,
 }
 
 pub struct PongGameState {
@@ -30,6 +31,7 @@ impl PongGame {
                 ball_pos: vec2(0.5, 0.5),
                 ball_dir: Vec2::from_angle(start_direction),
             },
+            score: 0.0,
         }
     }
 
@@ -41,17 +43,25 @@ impl PongGame {
     }
 }
 
-impl Game for PongGame {
+impl GameMetaData for PongGame {
     fn from_model(model: core_crnn::thinking_layer::ThinkingLayer) -> Self {
         PongGame::new(PongPlayer::model(model), PongPlayer::sync())
     }
-
     fn input_nodes() -> usize {
         5
     }
 
     fn output_nodes() -> usize {
         1
+    }
+}
+
+impl Game for PongGame {
+    fn extract_model(self) -> Option<core_crnn::thinking_layer::ThinkingLayer> {
+        match self.player.0.input {
+            PongPlayerInput::Model(model) => Some(model),
+            _ => None,
+        }
     }
 
     fn tick(&mut self, delta_time: Duration) {
@@ -92,12 +102,14 @@ impl Game for PongGame {
         // handle player loose
         if self.state.ball_pos.x > 1. {
             self.state.score.0 += 1;
-            self.reset_ball()
+            self.score += 1.0;
+            self.reset_ball();
         }
 
         if self.state.ball_pos.x < 0. {
             self.state.score.1 += 1;
-            self.reset_ball()
+            self.score -= 1.0 + (self.state.ball_pos.y - self.player.0.pos).abs();
+            self.reset_ball();
         }
     }
 
@@ -128,7 +140,7 @@ impl Game for PongGame {
     }
 
     fn score(&self) -> f32 {
-        self.state.score.0 as f32 - self.state.score.1 as f32
+        self.score
     }
 }
 

@@ -2,6 +2,7 @@ use crate::activation_function::ActivationFunction;
 use anyhow::bail;
 use rand::{random_iter, rng, Rng};
 
+#[derive(Debug, Clone)]
 pub struct ThinkingLayer {
     input_size: usize,
     internal_size: usize,
@@ -33,14 +34,14 @@ impl ThinkingLayer {
             genome: (0..internal_count)
                 .flat_map(|_| {
                     let mut data = vec![
-                        rng.random::<f64>() * 2.0 - 1.0, // Random bias from -1 to 1. (1xf64)
+                        rng.random::<f64>() / 10.0 - 0.05, // Random bias from -0.1 to 0.1 (1xf64)
                         1.0 + rng.random::<f64>() * 2.0, // Random delay from 1 to 3. (1xf64)
                     ];
                     data.extend(
-                        // Random weights in from -1 to 1 (n-1xf64)
+                        // Random weights in from -0.1 to 0.1 (n-1xf64)
                         random_iter::<f64>()
                             .take(internal_count - 1)
-                            .map(|x| x * 2.0 - 1.0)
+                            .map(|x| x / 10.0 - 0.05)
                             .collect::<Vec<_>>(),
                     );
                     data
@@ -52,7 +53,7 @@ impl ThinkingLayer {
         })
     }
 
-    pub fn tick(&mut self, input: Option<Vec<f64>>) -> Vec<f64> {
+    pub fn tick(&mut self, input: Option<Vec<f64>>) {
         if self.internal_tick == 0 {
             self.internal_tick = 1;
         }
@@ -68,7 +69,7 @@ impl ThinkingLayer {
             .enumerate()
             .map(|(neuron_index, delay)| {
                 let neuron_index = neuron_index + self.input_size;
-                if self.internal_tick % delay.round().min(1.0) as usize == 0 {
+                if self.internal_tick % delay.round().max(1.0) as usize == 0 {
                     self.activate_neuron(neuron_index)
                 } else {
                     self.neuron_states[neuron_index]
@@ -79,7 +80,9 @@ impl ThinkingLayer {
         self.neuron_states.splice(exclude_input_range, new_states);
 
         self.internal_tick = self.internal_tick.overflowing_add(1).0;
+    }
 
+    pub fn output(&self) -> Vec<f64> {
         let output_range = self.internal_size - self.output_size..self.internal_size;
         self.neuron_states[output_range].to_vec()
     }
