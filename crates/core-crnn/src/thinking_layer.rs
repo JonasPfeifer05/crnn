@@ -103,12 +103,8 @@ impl ThinkingLayer {
         &self.neuron_states
     }
 
-    pub fn bias(&self) -> Vec<&f64> {
-        self.genome
-            .iter()
-            .skip(0) // Bias is the first element
-            .step_by(self.neuron_data_length())
-            .collect()
+    pub fn bias(&self, index: usize) -> f64 {
+        self.genome[index * self.neuron_data_length()] // Bias is the first element
     }
 
     pub fn delays(&self) -> Vec<&f64> {
@@ -143,7 +139,7 @@ impl ThinkingLayer {
             sum += weights.next().unwrap() * state;
         }
 
-        let bias = *self.bias()[neuron_index];
+        let bias = self.bias(neuron_index);
 
         self.activation_function.apply(sum + bias)
     }
