@@ -34,14 +34,16 @@ pub struct PongGameState {
     pub ball_dir: Vec2,
 }
 
-pub fn random_ball_direction() -> f32 {
-    random_range(-FRAC_PI_4..FRAC_PI_4)
+pub fn random_ball_direction(direction: Direction) -> Vec2 {
+    let angle = random_range(-FRAC_PI_4..FRAC_PI_4);
+    let mut dir = Vec2::from_angle(angle);
+    direction.orient_vec2(&mut dir);
+    dir
 }
 
 impl PongGame {
     pub fn new(player_one: PongPlayer, player_two: PongPlayer) -> Self {
-        let mut ball_dir = Vec2::from_angle(random_ball_direction());
-        ball_dir.x *= -1.0;
+        let ball_dir = random_ball_direction(Direction::Left);
 
         PongGame {
             player: (player_one, player_two),
@@ -57,8 +59,7 @@ impl PongGame {
     fn reset_ball(&mut self, direction: Direction) {
         self.state.ball_pos = vec2(0.5, 0.5);
 
-        self.state.ball_dir = Vec2::from_angle(random_ball_direction());
-        direction.orient_vec2(&mut self.state.ball_dir);
+        self.state.ball_dir = random_ball_direction(direction);
     }
 }
 
@@ -103,18 +104,19 @@ impl Game for PongGame {
         if self.state.ball_pos.x > 1. - PLAYER_WIDTH
             && self.player.1.does_intersect_ball(&self.state.ball_pos)
         {
-            let bounce_angle = self.player.1.get_bounce_angle(self.state.ball_pos.y);
-
-            self.state.ball_dir = Vec2::from_angle(bounce_angle);
-            self.state.ball_dir.y *= -1.;
+            self.state.ball_dir = self
+                .player
+                .1
+                .get_bounce_dir(self.state.ball_pos.y, Direction::Left);
         }
 
         if self.state.ball_pos.x < PLAYER_WIDTH
             && self.player.0.does_intersect_ball(&self.state.ball_pos)
         {
-            let bounce_angle = self.player.0.get_bounce_angle(self.state.ball_pos.y);
-
-            self.state.ball_dir = Vec2::from_angle(bounce_angle);
+            self.state.ball_dir = self
+                .player
+                .0
+                .get_bounce_dir(self.state.ball_pos.y, Direction::Right);
         }
 
         // handle player loose
@@ -201,9 +203,11 @@ impl PongPlayer {
         ball_pos.y > self.pos && ball_pos.y < self.pos + PLAYER_HEIGHT
     }
 
-    pub fn get_bounce_angle(&self, ball_y: f32) -> f32 {
+    pub fn get_bounce_dir(&self, ball_y: f32, direction: Direction) -> Vec2 {
         let relative_intersect = (ball_y - (self.pos + PLAYER_HEIGHT / 2.)) / (PLAYER_HEIGHT / 2.);
-        (relative_intersect) * MAX_BOUNCE_ANGLE
+        let mut dir = Vec2::from_angle((relative_intersect) * MAX_BOUNCE_ANGLE);
+        direction.orient_vec2(&mut dir);
+        dir
     }
 
     pub fn input_mut(&mut self) -> &mut PongPlayerInput {
