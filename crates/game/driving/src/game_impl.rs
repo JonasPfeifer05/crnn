@@ -1,4 +1,5 @@
 use crate::player::{Player, PlayerInput};
+use crate::track::Track;
 use core_crnn::thinking_layer::ThinkingLayer;
 use game_lib::{Game, GameMetaData};
 use ggez::glam::Vec2;
@@ -8,11 +9,16 @@ use std::time::Duration;
 pub struct DrivingGame {
     pub score: f32,
     pub player: Player,
+    pub track: Track,
 }
 
 impl DrivingGame {
-    pub fn new(player: Player) -> Self {
-        Self { score: 0.0, player }
+    pub fn new(player: Player, track: Track) -> Self {
+        Self {
+            score: 0.0,
+            player,
+            track,
+        }
     }
 }
 
@@ -21,6 +27,7 @@ impl GameMetaData for DrivingGame {
         DrivingGame {
             score: 0.0,
             player: Player::new(PlayerInput::Ai(model), Vec2::default(), FRAC_PI_2),
+            track: Track::default(),
         }
     }
 

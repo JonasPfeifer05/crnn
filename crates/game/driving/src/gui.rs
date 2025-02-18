@@ -1,24 +1,28 @@
 use crate::game_impl::DrivingGame;
 use crate::player::{PlayerInput, PLAYER_HEIGHT, PLAYER_WIDTH};
 use game_lib::Game;
-use ggez::glam::Vec2;
-use ggez::graphics::{Canvas, Color, DrawMode, DrawParam, Mesh, Rect};
+use ggez::glam::{Mat4, Vec2, Vec3};
+use ggez::graphics::Image;
+use ggez::graphics::{Canvas, Color, DrawMode, DrawParam, Mesh, PxScale, Rect, Text};
 use ggez::input::keyboard::KeyInput;
 use ggez::winit::event::VirtualKeyCode;
 use ggez::{event, Context, GameError};
 use std::default::Default;
+use std::f32::consts::PI;
 
-pub const PIXELS_PER_METER: f32 = 50.0;
+pub const PIXELS_PER_METER: f32 = 75.0;
 pub const SCREEN_WIDTH: usize = 2000;
-pub const SCREEN_HEIGHT: usize = 1000;
+pub const SCREEN_HEIGHT: usize = 1500;
+pub const UI_FONT_SIZE: f32 = 40.0;
 
 pub struct DrivingGui {
     game: DrivingGame,
+    car_image: Image,
 }
 
 impl DrivingGui {
-    pub fn new(game: DrivingGame) -> Self {
-        Self { game }
+    pub fn new(game: DrivingGame, car_image: Image) -> Self {
+        Self { game, car_image }
     }
 
     pub fn draw_player(&self, canvas: &mut Canvas, ctx: &mut Context) -> Result<(), GameError> {
@@ -36,16 +40,49 @@ impl DrivingGui {
         )?;
 
         canvas.draw(
-            &mesh,
-            DrawParam::default()
+            &self.car_image,
+            DrawParam::new()
                 .dest_rect(Rect::new(
                     current_position.x,
-                    current_position.y + PLAYER_HEIGHT / 2.0,
-                    1.0,
-                    1.0,
+                    current_position.y,
+                    PLAYER_WIDTH / self.car_image.width() as f32,
+                    PLAYER_HEIGHT / self.car_image.height() as f32,
                 ))
+                .offset(Vec2::new(0.5, 1.0))
                 .rotation(self.game.player.direction),
         );
+
+        Ok(())
+    }
+
+    pub fn draw_track(&self, canvas: &mut Canvas, ctx: &mut Context) -> Result<(), GameError> {
+        let mesh = Mesh::new_polyline(
+            ctx,
+            DrawMode::stroke(13.0 * PIXELS_PER_METER),
+            &self.game.track.points,
+            Color::new(0.5, 0.5, 0.5, 1.0),
+        )?;
+        canvas.draw(
+            &mesh,
+            DrawParam::default().dest_rect(Rect::new(0.0, 0.0, 1.0, 1.0)),
+        );
+        Ok(())
+    }
+
+    pub fn draw_stats(&self, canvas: &mut Canvas, ctx: &mut Context) -> Result<(), GameError> {
+        let velocity = self.game.player.velocity;
+
+        let mut velocity_display = Text::new(format!(
+            "Current speed: {:.2} km/h",
+            velocity.abs() / PIXELS_PER_METER * 3.6
+        ));
+        velocity_display.set_scale(PxScale {
+            x: UI_FONT_SIZE,
+            y: UI_FONT_SIZE,
+        });
+
+        canvas.draw(&velocity_display, DrawParam::default().color(Color::BLACK));
+
         Ok(())
     }
 }
@@ -59,14 +96,30 @@ impl event::EventHandler<GameError> for DrivingGui {
 
     fn draw(&mut self, ctx: &mut Context) -> Result<(), GameError> {
         let mut canvas = Canvas::from_frame(ctx, Color::WHITE);
-        canvas.set_screen_coordinates(Rect::new(
-            0.0 - SCREEN_WIDTH as f32 / 2.0,
-            0.0 - SCREEN_HEIGHT as f32 / 2.0,
-            SCREEN_WIDTH as f32,
-            SCREEN_HEIGHT as f32,
-        ));
+        let current_position = self.game.player.current_position;
 
+        let camera_position = Vec2::new(-current_position.x, -current_position.y);
+        let camera_rotation = -(self.game.player.direction - PI);
+        // let camera_position = Vec2::new(0.0, 0.0);
+        // let camera_rotation = 0.0;
+        let transformation = Mat4::IDENTITY
+            * Mat4::from_scale((1.0 / SCREEN_WIDTH as f32, 1.0 / SCREEN_HEIGHT as f32, 1.0).into())
+            * Mat4::from_rotation_z(camera_rotation)
+            * Mat4::from_translation((camera_position, 0.0).into());
+        canvas.set_projection(transformation);
+
+        self.draw_track(&mut canvas, ctx)?;
         self.draw_player(&mut canvas, ctx)?;
+
+        canvas.set_projection(
+            Mat4::IDENTITY
+                * Mat4::from_translation(Vec3::new(-1.0, 1.0, 0.0))
+                * Mat4::from_scale(
+                    (1.0 / SCREEN_WIDTH as f32, -1.0 / SCREEN_HEIGHT as f32, 1.0).into(),
+                ),
+        );
+
+        self.draw_stats(&mut canvas, ctx)?;
 
         canvas.finish(ctx)?;
         ggez::timer::yield_now();

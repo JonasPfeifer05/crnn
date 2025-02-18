@@ -3,13 +3,13 @@ use core_crnn::thinking_layer::ThinkingLayer;
 use ggez::glam::Vec2;
 use std::f32::consts::{FRAC_PI_2, PI};
 
-pub const PLAYER_WIDTH: f32 = 2.0 * PIXELS_PER_METER;
+pub const PLAYER_WIDTH: f32 = 2.200 * PIXELS_PER_METER;
 pub const PLAYER_HEIGHT: f32 = 5.0 * PIXELS_PER_METER;
 
-const CAR_MAX_SPEED: f32 = 100.0 * PIXELS_PER_METER;
-const CAR_DECELERATION: f32 = 8.0 * PIXELS_PER_METER;
-const CAR_MAX_ACCELERATION: f32 = CAR_DECELERATION + 11.0 * PIXELS_PER_METER;
-const CAR_TURNING_RADIUS: f32 = 15.0 * PIXELS_PER_METER;
+const CAR_MAX_SPEED: f32 = 82.22 * PIXELS_PER_METER;
+const CAR_DECELERATION: f32 = 15.0 * PIXELS_PER_METER;
+const CAR_MAX_ACCELERATION: f32 = CAR_DECELERATION + 8.68 * PIXELS_PER_METER;
+const CAR_TURNING_RADIUS: f32 = 10.5 * PIXELS_PER_METER;
 
 pub enum PlayerInput {
     Human { w: bool, a: bool, s: bool, d: bool },
@@ -25,7 +25,7 @@ impl PlayerInput {
             d: false,
         }
     }
-    
+
     pub fn ai(thinking_layer: ThinkingLayer) -> Self {
         Self::Ai(thinking_layer)
     }
@@ -52,7 +52,7 @@ impl Player {
         let (throttle, steering) = match &self.input {
             PlayerInput::Human { w, a, s, d } => (
                 (*s as isize - *w as isize) as f64,
-                (*a as isize - *d as isize) as f64,
+                (*d as isize - *a as isize) as f64,
             ),
             PlayerInput::Ai(model) => {
                 let mut ai_output = model.output();
@@ -63,7 +63,15 @@ impl Player {
             }
         };
 
-        let max_turning_speed = self.velocity / CAR_TURNING_RADIUS * dt;
+        let factor = if self.velocity != 0.0 {
+            1.0 / ((self.velocity / PIXELS_PER_METER + 1.0) / 4.0)
+                .abs()
+                .sqrt()
+        } else {
+            1.0
+        };
+
+        let max_turning_speed = (self.velocity / CAR_TURNING_RADIUS) * factor * dt;
         self.direction = (self.direction + max_turning_speed * steering as f32) % (2.0 * PI);
 
         self.velocity = (self.velocity + CAR_MAX_ACCELERATION * dt * throttle as f32)
@@ -72,7 +80,7 @@ impl Player {
 
         let deceleration = self.velocity.abs().min(CAR_DECELERATION * dt);
         self.velocity -= self.velocity.signum() * deceleration;
-        
+
         self.current_position += Vec2::from_angle(self.direction + FRAC_PI_2) * self.velocity * dt;
     }
 }

@@ -1,17 +1,18 @@
 use crate::game_impl::DrivingGame;
 use crate::gui::{DrivingGui, SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::player::{Player, PlayerInput};
-use core_crnn::activation_function::ActivationFunction;
+use crate::track::Track;
 use core_crnn::activation_function::ActivationFunction::Tanh;
 use core_crnn::thinking_layer::ThinkingLayer;
 use game_lib::GameMetaData;
-use ggez::glam::Vec2;
+use ggez::graphics::Image;
 use ggez::{event, GameResult};
-use std::f32::consts::FRAC_PI_2;
+use std::f32::consts::PI;
 
 mod game_impl;
 mod gui;
 mod player;
+mod track;
 
 fn main() -> GameResult {
     let (ctx, events_loop) = ggez::ContextBuilder::new("Driving Game", "Jonas Pfeifer")
@@ -41,11 +42,20 @@ fn main() -> GameResult {
 
     let input = PlayerInput::human();
 
-    let state = DrivingGui::new(DrivingGame::new(Player {
-        input,
-        current_position: Default::default(),
-        direction: 0.0,
-        velocity: 0.0,
-    }));
+    let realistic_911 = include_bytes!("../res/911.png");
+    let comic_911 = include_bytes!("../res/911_comic.png");
+    let car_image = Image::from_bytes(&ctx, comic_911)?;
+    let state = DrivingGui::new(
+        DrivingGame::new(
+            Player {
+                input,
+                current_position: Default::default(),
+                direction: PI,
+                velocity: 0.0,
+            },
+            Track::default(),
+        ),
+        car_image,
+    );
     event::run(ctx, events_loop, state)
 }
