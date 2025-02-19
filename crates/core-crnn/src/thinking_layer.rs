@@ -1,6 +1,8 @@
 use crate::activation_function::ActivationFunction;
 use anyhow::bail;
 use rand::{random_iter, random_range};
+use std::simd::num::SimdFloat;
+use std::simd::{f64x4, Simd};
 
 #[derive(Debug, Clone)]
 pub struct ThinkingLayer {
@@ -123,26 +125,40 @@ impl ThinkingLayer {
     }
 
     fn activate_neuron(&self, neuron_index: usize) -> f64 {
-        let mut weights = self.input_weights(neuron_index).iter();
+        let mut weights = self.input_weights(neuron_index);
         let states = self.neuron_states();
 
         let mut sum = 0.0;
 
-        sum += states[..neuron_index]
-            .iter()
-            .zip(&mut weights)
-            .map(|(&state, &weight)| state * weight)
-            .sum::<f64>();
-
-        sum += states[(neuron_index + 1)..]
-            .iter()
-            .zip(&mut weights)
-            .map(|(&state, &weight)| state * weight)
-            .sum::<f64>();
+        sum += Self::simd_dot_product(&states[..neuron_index], &weights[..neuron_index]);
+        sum += Self::simd_dot_product(&states[(neuron_index + 1)..], &weights[neuron_index..]);
 
         let bias = self.bias(neuron_index);
 
         self.activation_function.apply(sum + bias)
+    }
+
+    fn simd_dot_product(states: &[f64], weights: &[f64]) -> f64 {
+        let mut sum = f64x4::splat(0.0);
+        let chunk_size = 4;
+
+        let len = states.len().min(weights.len()); // Ensure both slices are the same length
+        let chunks = len / chunk_size * chunk_size; // Align to SIMD width
+
+        for i in (0..chunks).step_by(chunk_size) {
+            let state_chunk = Simd::from_slice(&states[i..i + chunk_size]);
+            let weight_chunk = Simd::from_slice(&weights[i..i + chunk_size]);
+            sum += state_chunk * weight_chunk;
+        }
+
+        let mut scalar_sum: f64 = sum.reduce_sum(); // Reduce SIMD lanes
+
+        // Handle remaining elements (tail processing)
+        for i in chunks..len {
+            scalar_sum += states[i] * weights[i];
+        }
+
+        scalar_sum
     }
 
     pub fn genome(&self) -> &[f64] {
