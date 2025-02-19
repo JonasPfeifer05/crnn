@@ -128,13 +128,17 @@ impl ThinkingLayer {
 
         let mut sum = 0.0;
 
-        for state in &states[..neuron_index] {
-            sum += weights.next().unwrap() * state;
-        }
+        sum += states[..neuron_index]
+            .iter()
+            .zip(&mut weights)
+            .map(|(&state, &weight)| state * weight)
+            .sum::<f64>();
 
-        for state in &states[(neuron_index + 1)..] {
-            sum += weights.next().unwrap() * state;
-        }
+        sum += states[(neuron_index + 1)..]
+            .iter()
+            .zip(&mut weights)
+            .map(|(&state, &weight)| state * weight)
+            .sum::<f64>();
 
         let bias = self.bias(neuron_index);
 
