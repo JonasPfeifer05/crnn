@@ -1,6 +1,8 @@
 use crate::activation_function::ActivationFunction;
 use anyhow::bail;
 use rand::{random_iter, random_range};
+use std::simd::num::SimdFloat;
+use std::simd::{f64x1, f64x16, f64x2, f64x32, f64x4, f64x64, f64x8, Simd};
 
 #[derive(Debug, Clone)]
 pub struct ThinkingLayer {
@@ -123,22 +125,39 @@ impl ThinkingLayer {
     }
 
     fn activate_neuron(&self, neuron_index: usize) -> f64 {
-        let mut weights = self.input_weights(neuron_index).iter();
+        let weights = self.input_weights(neuron_index);
         let states = self.neuron_states();
 
         let mut sum = 0.0;
 
-        for state in &states[..neuron_index] {
-            sum += weights.next().unwrap() * state;
-        }
-
-        for state in &states[(neuron_index + 1)..] {
-            sum += weights.next().unwrap() * state;
-        }
+        sum += Self::simd_multiply(&states[..neuron_index], &weights[..neuron_index]);
+        sum += Self::simd_multiply(&states[(neuron_index + 1)..], &weights[neuron_index..]);
 
         let bias = self.bias(neuron_index);
 
         self.activation_function.apply(sum + bias)
+    }
+
+    fn simd_multiply(states: &[f64], weights: &[f64]) -> f64 {
+        let mut sum = f64x4::splat(0.0);
+        let chunk_size = 4;
+
+        let len = states.len().min(weights.len());
+        let chunkable_length = (len / chunk_size) * chunk_size;
+
+        for i in (0..chunkable_length).step_by(chunk_size) {
+            let state_chunk = Simd::from_slice(&states[i..i + chunk_size]);
+            let weight_chunk = Simd::from_slice(&weights[i..i + chunk_size]);
+            sum += state_chunk * weight_chunk;
+        }
+
+        let mut scalar_sum: f64 = sum.reduce_sum();
+
+        for i in chunkable_length..len {
+            scalar_sum += states[i] * weights[i];
+        }
+
+        scalar_sum
     }
 
     pub fn genome(&self) -> &[f64] {
